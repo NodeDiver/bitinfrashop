@@ -96,99 +96,26 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Unified Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            {/* Feature 1: List Services */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                </svg>
+          {/* Simple Capabilities List - Minimalistic */}
+          <div className="max-w-3xl mx-auto">
+            <div className="space-y-3 text-center">
+              <div className="flex items-center justify-center gap-3 text-neutral-700 dark:text-neutral-300">
+                <span className="text-orange-600 dark:text-orange-500">⚡</span>
+                <span>Lightning Network payments with NWC integration</span>
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                List Infrastructure Services
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Payment processors, Lightning nodes, wallet APIs, and more
-              </p>
-            </div>
-
-            {/* Feature 2: Browse Providers */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+              <div className="flex items-center justify-center gap-3 text-neutral-700 dark:text-neutral-300">
+                <span className="text-orange-600 dark:text-orange-500">🗺️</span>
+                <span>Global shop discovery with BTCMap integration</span>
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                Connect to Providers
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Find payment infrastructure with optional NWC subscriptions
-              </p>
-            </div>
-
-            {/* Feature 3: List Your Shop */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+              <div className="flex items-center justify-center gap-3 text-neutral-700 dark:text-neutral-300">
+                <span className="text-orange-600 dark:text-orange-500">🔌</span>
+                <span>Connect providers with Bitcoin-accepting businesses</span>
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                List Your Shop
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Add your Bitcoin-accepting business to the marketplace
-              </p>
-            </div>
-
-            {/* Feature 4: Discover Shops */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <div className="flex items-center justify-center gap-3 text-neutral-700 dark:text-neutral-300">
+                <span className="text-orange-600 dark:text-orange-500">🏪</span>
+                <span>List infrastructure services and shops in one marketplace</span>
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                Discover Bitcoin Shops
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Search businesses accepting Bitcoin payments worldwide
-              </p>
             </div>
-
-            {/* Feature 5: Interactive Map */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                Interactive Map View
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Explore shops on an interactive map with BTCMap integration
-              </p>
-            </div>
-
-            {/* Feature 6: Lightning Payments */}
-            <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 hover:shadow-xl">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
-                Lightning Network Support
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                Fast, low-cost payments via Lightning Network and NWC
-              </p>
-            </div>
-
           </div>
         </div>
       </section>
@@ -243,7 +170,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* CTA Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-orange-800 to-orange-900 dark:from-orange-900 dark:to-orange-950">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to Join the Bitcoin Marketplace?
+          </h2>
+          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
+            Whether you're providing infrastructure, running a shop, or looking for Bitcoin-accepting businesses
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/register"
+              className="bg-white text-orange-800 px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-50 transition-all duration-200 shadow-lg hover:shadow-xl"
+              aria-label="Register for Bitinfrashop marketplace"
+            >
+              Get Started
+            </Link>
+            <Link
+              href="/discover"
+              className="bg-orange-950 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition-all duration-200 shadow-lg hover:shadow-xl border-2 border-white/20"
+              aria-label="Discover Bitcoin-accepting shops"
+            >
+              Explore Shops
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-neutral-800">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-neutral-900 dark:text-white mb-16">
@@ -322,34 +277,6 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-orange-800 to-orange-900 dark:from-orange-900 dark:to-orange-950">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Join the Bitcoin Marketplace?
-          </h2>
-          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
-            Whether you're providing infrastructure, running a shop, or looking for Bitcoin-accepting businesses
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/register"
-              className="bg-white text-orange-800 px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-50 transition-all duration-200 shadow-lg hover:shadow-xl"
-              aria-label="Register for Bitinfrashop marketplace"
-            >
-              Get Started
-            </Link>
-            <Link
-              href="/discover"
-              className="bg-orange-950 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition-all duration-200 shadow-lg hover:shadow-xl border-2 border-white/20"
-              aria-label="Discover Bitcoin-accepting shops"
-            >
-              Explore Shops
-            </Link>
           </div>
         </div>
       </section>
