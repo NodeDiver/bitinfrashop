@@ -298,26 +298,27 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">For Providers</h4>
+              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">Marketplace</h4>
               <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-                <li><Link href="/register?role=PROVIDER" className="hover:text-orange-600 dark:hover:text-orange-400">Register</Link></li>
-                <li><Link href="/providers" className="hover:text-orange-600 dark:hover:text-orange-400">Browse Providers</Link></li>
+                <li><Link href="/discover" className="hover:text-orange-600 dark:hover:text-orange-400">Discover</Link></li>
+                <li><Link href="/infrastructure" className="hover:text-orange-600 dark:hover:text-orange-400">Infrastructure</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">For Shop Owners</h4>
+              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">Account</h4>
               <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-                <li><Link href="/register?role=SHOP_OWNER" className="hover:text-orange-600 dark:hover:text-orange-400">Register</Link></li>
-                <li><Link href="/providers" className="hover:text-orange-600 dark:hover:text-orange-400">Find Infrastructure</Link></li>
+                <li><Link href="/register" className="hover:text-orange-600 dark:hover:text-orange-400">Register</Link></li>
+                <li><Link href="/login" className="hover:text-orange-600 dark:hover:text-orange-400">Login</Link></li>
+                <li><Link href="/dashboard" className="hover:text-orange-600 dark:hover:text-orange-400">Dashboard</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">For Bitcoiners</h4>
+              <h4 className="font-semibold text-neutral-900 dark:text-white mb-4">Resources</h4>
               <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-                <li><Link href="/discover" className="hover:text-orange-600 dark:hover:text-orange-400">Discover Shops</Link></li>
-                <li><Link href="/register?role=BITCOINER" className="hover:text-orange-600 dark:hover:text-orange-400">Create Account</Link></li>
+                <li><Link href="https://github.com/yourusername/bitinfrashop" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 dark:hover:text-orange-400">GitHub</Link></li>
+                <li><Link href="https://docs.bitinfrashop.com" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 dark:hover:text-orange-400">Documentation</Link></li>
               </ul>
             </div>
           </div>
