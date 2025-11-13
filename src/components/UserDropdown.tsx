@@ -103,32 +103,18 @@ export default function UserDropdown({ user }: UserDropdownProps) {
 
           {/* Menu Items */}
           <div className="py-2">
-            {/* Browse Servers */}
+            {/* Discover */}
             <Link
-              href="/infrastructure"
+              href="/discover"
               onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-3 px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-support-50 dark:hover:bg-support-500/10 hover:text-support-600 dark:hover:text-support-400 transition-colors duration-200 group"
+              className="flex items-center space-x-3 px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400 transition-colors duration-200 group"
             >
-              <div className="w-5 h-5 text-support-500 dark:text-support-400 transition-colors duration-200">
+              <div className="w-5 h-5 text-orange-500 dark:text-orange-400 transition-colors duration-200">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span>Browse Servers</span>
-            </Link>
-
-            {/* Shops Dashboard */}
-            <Link
-              href="/shops"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-3 px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200 group"
-            >
-              <div className="w-5 h-5 text-primary-500 dark:text-primary-400 transition-colors duration-200">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-              </div>
-              <span>Shops Dashboard</span>
+              <span>Discover</span>
             </Link>
 
             {/* Dashboard */}

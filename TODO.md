@@ -21,6 +21,22 @@ A human-readable list of tasks and improvements for the Bitinfrashop - Bitcoin S
 - **Auth module consolidation**: Remove legacy `src/lib/auth.ts` file
   - Point all imports to `auth-prisma.ts` for single source of truth
   - Resolve type mismatches in client context caused by mixed imports
+- **Two-Factor Authentication (2FA)**: Implement 2FA toggle in settings (future enhancement)
+  - Add TOTP/authenticator app support
+  - Backend: Generate and validate 2FA codes
+  - Frontend: Settings toggle + QR code setup flow
+- **Email Notifications System**: Implement email notification preferences (future enhancement)
+  - Backend: Email service integration (SendGrid, Postmark, etc.)
+  - Settings: Toggle for account activity emails
+  - Email templates for subscriptions, payments, alerts
+- **Lightning Network Alerts**: Implement Lightning payment notifications (future enhancement)
+  - Real-time alerts for payment status changes
+  - Settings: Toggle for Lightning-specific alerts
+  - Push notifications or email alerts
+- **Account Connections**: Display linked accounts in settings (future enhancement)
+  - Show Google, GitHub, Nostr, or other OAuth connections
+  - Allow users to link/unlink external accounts
+  - Display connection status and last used date
 
 ### UI Design System
 - **Professional color palette refresh**: Update `tailwind.config.js` with refined colors
