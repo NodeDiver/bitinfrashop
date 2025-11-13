@@ -245,7 +245,7 @@ export default function DiscoverPage() {
           <div className="flex space-x-8">
             <button
               onClick={() => setViewType('all')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+              className={`py-4 px-4 sm:px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
                 viewType === 'all'
                   ? 'border-orange-600 text-orange-600 dark:text-orange-500'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
@@ -255,7 +255,7 @@ export default function DiscoverPage() {
             </button>
             <button
               onClick={() => setViewType('shops')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+              className={`py-4 px-4 sm:px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
                 viewType === 'shops'
                   ? 'border-orange-600 text-orange-600 dark:text-orange-500'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'
@@ -265,7 +265,7 @@ export default function DiscoverPage() {
             </button>
             <button
               onClick={() => setViewType('infrastructure')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+              className={`py-4 px-4 sm:px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
                 viewType === 'infrastructure'
                   ? 'border-orange-600 text-orange-600 dark:text-orange-500'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300'

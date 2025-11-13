@@ -241,7 +241,7 @@ export default function AddServer() {
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Public Listing *
               </label>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <label className="flex items-center">
                   <input
                     type="radio"

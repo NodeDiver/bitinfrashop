@@ -51,7 +51,7 @@ export default function HomePage() {
 
           {/* Stats Bar */}
           {!loading && (
-            <div className="flex flex-wrap justify-center gap-12 mb-12">
+            <div className="flex flex-wrap justify-center gap-6 md:gap-12 mb-12">
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.providers}</div>
                 <div className="text-sm text-neutral-600 dark:text-neutral-400">Providers Listed</div>

@@ -160,7 +160,7 @@ export default function Settings() {
                       value={nwcConnectionString}
                       onChange={(e) => setNwcConnectionString(e.target.value)}
                       placeholder="nostr+walletconnect://69effe..."
-                      className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 font-mono text-sm"
+                      className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 font-mono text-base md:text-sm"
                     />
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
                       Your NWC connection string is stored securely and encrypted

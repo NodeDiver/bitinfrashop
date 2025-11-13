@@ -28,18 +28,18 @@ interface BTCPayServer {
 // Revenue Component for inline display - only shown to owners
 function RevenueDisplay({ serverId }: { serverId: number }) {
   const [revenuePeriod, setRevenuePeriod] = useState<'monthly' | 'yearly'>('monthly');
-  
+
   // Calculate revenue for this specific server (placeholder - $10 per active subscription)
   const monthlyRevenue = 10; // Placeholder - would be calculated based on server's shops
   const yearlyRevenue = monthlyRevenue * 12;
   const currentRevenue = revenuePeriod === 'monthly' ? monthlyRevenue : yearlyRevenue;
-  
+
   // Convert to satoshis (1 USD ≈ 3,000,000 sats as placeholder)
   const satoshiRate = 3000000;
   const revenueInSats = Math.round(currentRevenue * satoshiRate);
 
   return (
-    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 ml-4 min-w-[200px]">
+    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 mt-3 sm:ml-4 sm:mt-0 min-w-[200px]">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <div className="p-1 bg-orange-100 dark:bg-orange-900/50 rounded">
@@ -91,7 +91,7 @@ function RevenueDisplay({ serverId }: { serverId: number }) {
 // Contact Admin Component for non-owners
 function ContactAdminDisplay({ serverName }: { serverName: string }) {
   return (
-    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 ml-4 min-w-[200px]">
+    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-3 mt-3 sm:ml-4 sm:mt-0 min-w-[200px]">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <div className="p-1 bg-amber-100 dark:bg-amber-900/50 rounded">
@@ -259,7 +259,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   {servers.map((server) => (
-                    <div key={server.id} className="flex items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-orange-400 dark:hover:border-orange-600 hover:shadow-lg transition-all duration-300">
+                    <div key={server.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-orange-400 dark:hover:border-orange-600 hover:shadow-lg transition-all duration-300">
                       <Link href={`/infrastructure/${server.id}`} className="flex-1 cursor-pointer transition-colors rounded p-2 -m-2">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-medium text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-500 transition-colors">{server.name}</h3>
