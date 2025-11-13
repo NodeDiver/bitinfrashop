@@ -24,7 +24,7 @@ export default function LoginPage() {
       if (redirectTo) {
         router.push(decodeURIComponent(redirectTo));
       } else {
-        router.push('/');
+        router.push('/dashboard');
       }
     }
   }, [user, router, searchParams]);
@@ -70,11 +70,11 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const result = await signIn('google', { 
+      const result = await signIn('google', {
         redirect: false,
-        callbackUrl: '/'
+        callbackUrl: '/dashboard'
       });
-      
+
       if (result?.error) {
         setError('Google login failed');
         showToast('Google login failed', 'error');
@@ -85,7 +85,7 @@ export default function LoginPage() {
         if (redirectTo) {
           window.location.href = decodeURIComponent(redirectTo);
         } else {
-          window.location.href = '/';
+          window.location.href = '/dashboard';
         }
       }
     } catch (error) {

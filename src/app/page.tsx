@@ -51,7 +51,7 @@ export default function HomePage() {
 
           {/* Stats Bar */}
           {!loading && (
-            <div className="flex flex-wrap justify-center gap-8 mb-12">
+            <div className="flex flex-wrap justify-center gap-12 mb-12">
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.providers}</div>
                 <div className="text-sm text-neutral-600 dark:text-neutral-400">Providers Listed</div>
@@ -59,10 +59,6 @@ export default function HomePage() {
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.shops}</div>
                 <div className="text-sm text-neutral-600 dark:text-neutral-400">Shops Connected</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-orange-600 dark:text-orange-400">{stats.connections}</div>
-                <div className="text-sm text-neutral-600 dark:text-neutral-400">Active Connections</div>
               </div>
             </div>
           )}

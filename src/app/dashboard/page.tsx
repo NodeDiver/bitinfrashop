@@ -125,25 +125,33 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch shops
-        const shopsResponse = await fetch('/api/shops');
+        // Fetch user's own shops
+        const shopsResponse = await fetch('/api/user/shops');
         if (shopsResponse.ok) {
           const shopsData = await shopsResponse.json();
           setShops(shopsData.shops);
         }
 
-        // Fetch servers
-        const serversResponse = await fetch('/api/servers');
-        if (serversResponse.ok) {
-          const serversData = await serversResponse.json();
-          // Add mock health data for demonstration
-          const serversWithHealth = serversData.servers.map((server: BTCPayServer) => ({
-            ...server,
-            is_online: server.name === 'muni btcpayserver' ? true : Math.random() > 0.3, // muni server is online, others random
-            last_seen_online: server.name === 'muni btcpayserver' ? new Date().toISOString() : 
-              new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString() // random time within last 24h
+        // Fetch user's own infrastructure providers
+        const providersResponse = await fetch('/api/user/providers');
+        if (providersResponse.ok) {
+          const providersData = await providersResponse.json();
+          // Transform providers to match server interface for backward compatibility
+          const transformedProviders = providersData.providers.map((provider: any) => ({
+            id: provider.id,
+            name: provider.name,
+            host_url: provider.website || '',
+            description: provider.description,
+            lightning_address: provider.lightning_address,
+            available_slots: provider.slots_available,
+            current_shops: provider.active_shops,
+            is_online: true, // Default to online
+            last_seen_online: new Date().toISOString(),
+            is_owner: 1, // User owns all their providers
+            owner_id: provider.owner.id,
+            created_at: provider.created_at
           }));
-          setServers(serversWithHealth);
+          setServers(transformedProviders);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
