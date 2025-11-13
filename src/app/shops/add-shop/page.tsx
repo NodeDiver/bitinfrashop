@@ -36,12 +36,13 @@ export default function AddShop() {
 
   // Shop owner details (right side)
   const [shopOwnerLightningAddress, setShopOwnerLightningAddress] = useState("");
+  const [shopDescription, setShopDescription] = useState("");
   const [isShopPublic, setIsShopPublic] = useState(true);
 
   // Subscription form fields
   const [amount, setAmount] = useState(500);
   const [timeframe, setTimeframe] = useState("30d");
-  const [comment, setComment] = useState("");
+  const [serviceRequirements, setServiceRequirements] = useState("");
 
   // Validation and feedback
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,14 +142,6 @@ export default function AddShop() {
     }
   }, [selectedShop, stores]);
 
-  // Update comment whenever shop or server changes
-  useEffect(() => {
-    const selected = stores.find((s) => s.id === selectedShop);
-    const shopName = selected?.name || "";
-    if (shopName && selectedServer) {
-      setComment(`${shopName} subscription to ${selectedServer.name}`);
-    }
-  }, [selectedShop, selectedServer, stores]);
 
   // Handle subscribe button
   const handleSubscribe = async () => {
@@ -163,6 +156,18 @@ export default function AddShop() {
 
     if (!shopOwnerLightningAddress) {
       showToast('Please enter your lightning address for refunds', 'error');
+      setLoading(false);
+      return;
+    }
+
+    if (!shopDescription || shopDescription.trim().length < 30) {
+      showToast('Please provide a shop description (at least 30 characters)', 'error');
+      setLoading(false);
+      return;
+    }
+
+    if (shopDescription.length > 400) {
+      showToast('Shop description must be 400 characters or less', 'error');
       setLoading(false);
       return;
     }
@@ -187,6 +192,8 @@ export default function AddShop() {
           server_id: selectedServer.id,
           lightning_address: shopOwnerLightningAddress,
           is_public: isShopPublic,
+          description: shopDescription,
+          service_requirements: serviceRequirements,
         }),
       });
 
@@ -355,10 +362,33 @@ export default function AddShop() {
                 </p>
               </div>
 
+              {/* Service Requirements */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  Service Requirements <span className="text-neutral-500 dark:text-neutral-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  value={serviceRequirements}
+                  onChange={(e) => setServiceRequirements(e.target.value)}
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
+                  rows={4}
+                  maxLength={500}
+                  placeholder="e.g., 99% uptime 9am-5pm EST, 24hr email support, help with payment setup."
+                />
+                <div className="mt-1 flex justify-between items-start">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 flex-1">
+                    Tell your provider what you need (uptime, support, setup help).
+                  </p>
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 ml-2 flex-shrink-0">
+                    {serviceRequirements.length}/500
+                  </p>
+                </div>
+              </div>
+
               {/* Subscribe Button */}
               <button
                 onClick={handleSubscribe}
-                disabled={loading || !selectedShop || !selectedServer || !shopOwnerLightningAddress || selectedShopHasSubscription || stores.length === 0 || stores.filter(s => !s.hasActiveSubscription).length === 0}
+                disabled={loading || !selectedShop || !selectedServer || !shopOwnerLightningAddress || !shopDescription || shopDescription.trim().length < 30 || shopDescription.length > 400 || selectedShopHasSubscription || stores.length === 0 || stores.filter(s => !s.hasActiveSubscription).length === 0}
                 className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed magnetic-pull"
               >
                 {loading ? 'Creating Shop...' : 
@@ -390,6 +420,29 @@ export default function AddShop() {
                 </p>
               </div>
 
+              {/* Shop Description */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  About Your Shop *
+                </label>
+                <textarea
+                  value={shopDescription}
+                  onChange={(e) => setShopDescription(e.target.value)}
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
+                  rows={4}
+                  maxLength={400}
+                  placeholder="e.g., Bitcoin merch shop. Need 99% uptime during US business hours."
+                />
+                <div className="mt-1 flex justify-between items-start">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 flex-1">
+                    Describe your shop. Visible to customers and provider.
+                  </p>
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 ml-2 flex-shrink-0">
+                    {shopDescription.length}/400
+                  </p>
+                </div>
+              </div>
+
               {/* Amount */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
@@ -406,33 +459,19 @@ export default function AddShop() {
 
               {/* Timeframe */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Timeframe
                 </label>
                 <select
                   value={timeframe}
                   onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
                 >
                   <option value="30d">30 days</option>
                   <option value="7d">7 days</option>
                   <option value="1d">1 day</option>
                   <option value="1h">1 hour (test)</option>
                 </select>
-              </div>
-
-              {/* Comment */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Comment
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
-                  rows={3}
-                  placeholder="Subscription comment..."
-                />
               </div>
 
               {/* Shop Public/Private Toggle */}
@@ -447,12 +486,12 @@ export default function AddShop() {
               </div>
 
               {/* Preview */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h3>
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <div className="bg-neutral-50 dark:bg-neutral-700 rounded-md p-4">
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Preview</h3>
+                <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+                  <div><strong>Shop Description:</strong> {shopDescription || '(Not provided)'}</div>
                   <div><strong>Amount:</strong> {amount} sats</div>
                   <div><strong>Timeframe:</strong> {timeframe} ({convertTimeframeToInterval(timeframe)})</div>
-                  <div><strong>Comment:</strong> {comment}</div>
                   <div><strong>Shop Visibility:</strong> {isShopPublic ? 'Public' : 'Private'}</div>
                 </div>
               </div>
@@ -462,23 +501,23 @@ export default function AddShop() {
           {/* NWC Setup Modal */}
           {showLightningSub && createdShopId && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">
                       Shop Created Successfully!
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Your shop has been created. To enable automatic subscription payments, 
+                    <p className="text-neutral-600 dark:text-neutral-300">
+                      Your shop has been created. To enable automatic subscription payments,
                       you'll need to set up a NWC (Nostr Wallet Connect) connection.
                     </p>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+                    <h4 className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
                       Next Steps:
                     </h4>
-                    <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                    <ul className="text-sm text-orange-700 dark:text-orange-300 space-y-1">
                       <li>• Go to NWC Management to set up your wallet connection</li>
                       <li>• Connect your Nostr wallet via NWC</li>
                       <li>• Configure automatic payments for your subscription</li>
@@ -488,7 +527,7 @@ export default function AddShop() {
                   <div className="flex space-x-4">
                     <Link
                       href="/nwc-management"
-                      className="flex-1 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-center"
+                      className="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 text-center"
                     >
                       Setup NWC Connection
                     </Link>
@@ -497,7 +536,7 @@ export default function AddShop() {
                         setShowLightningSub(false);
                         setCreatedShopId(null);
                       }}
-                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                      className="flex-1 bg-neutral-300 hover:bg-neutral-400 text-neutral-700 dark:bg-neutral-600 dark:hover:bg-neutral-500 dark:text-neutral-200 px-4 py-2 rounded-lg font-medium transition-colors"
                     >
                       Close
                     </button>
