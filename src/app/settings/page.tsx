@@ -13,7 +13,6 @@ export default function Settings() {
   // Toggle switch states for preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [lightningAlerts, setLightningAlerts] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(false);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -148,14 +147,6 @@ export default function Settings() {
                       description="Add an extra layer of security to your account"
                       size="md"
                     />
-
-                    <ToggleSwitch
-                      checked={false}
-                      onChange={() => {}}
-                      label="Session Management"
-                      description="Allow multiple active sessions across devices"
-                      size="md"
-                    />
                   </div>
                 </div>
               </section>
@@ -179,14 +170,6 @@ export default function Settings() {
                     onChange={setLightningAlerts}
                     label="Lightning Network Alerts"
                     description="Get notified about payment status changes"
-                    size="md"
-                  />
-
-                  <ToggleSwitch
-                    checked={autoRefresh}
-                    onChange={setAutoRefresh}
-                    label="Auto-refresh Dashboard"
-                    description="Automatically refresh dashboard data every 30 seconds"
                     size="md"
                   />
                 </div>
