@@ -90,18 +90,22 @@ export default function ServerDashboard({ params }: { params: Promise<{ serverId
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center">
-              <Link
-                href="/infrastructure"
-                className="text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 mr-4 font-medium transition-colors duration-200"
-              >
-                ← Back to Servers
-              </Link>
-              <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-                {server ? server.name : 'Server Dashboard'}
-              </h1>
-            </div>
+          <div className="mb-8">
+            <div className="flex justify-between items-center">
+              <div>
+                <Link
+                  href="/infrastructure"
+                  className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-all duration-200 shadow-sm hover:shadow w-fit"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Back to Servers</span>
+                </Link>
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
+                  {server ? server.name : 'Server Dashboard'}
+                </h1>
+              </div>
             <div className="flex items-center space-x-4">
               {server && server.isOwner && (
                 <button

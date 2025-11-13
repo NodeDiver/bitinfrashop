@@ -134,9 +134,12 @@ export default function ConnectProviderPage({ params }: { params: Promise<{ prov
             <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">{error}</h2>
             <Link
               href="/discover"
-              className="inline-block mt-4 text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-all duration-200 shadow-sm hover:shadow"
             >
-              ← Back to Discover
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Back to Discover</span>
             </Link>
           </div>
         </div>
@@ -151,9 +154,12 @@ export default function ConnectProviderPage({ params }: { params: Promise<{ prov
         <div className="mb-6">
           <Link
             href="/discover"
-            className="text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 font-medium mb-4 inline-block"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-all duration-200 shadow-sm hover:shadow w-fit"
           >
-            ← Back to Discover
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Discover</span>
           </Link>
           <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
             Connect to Infrastructure Provider
