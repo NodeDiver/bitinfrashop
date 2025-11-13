@@ -68,7 +68,6 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         </div>
         <div className="hidden sm:block text-left">
           <div className="text-sm font-medium text-gray-900 dark:text-white">{user.username}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">User</div>
         </div>
         {/* Dropdown Arrow */}
         <svg
@@ -96,7 +95,6 @@ export default function UserDropdown({ user }: UserDropdownProps) {
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">{user.username}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Bitinfrashop User</div>
               </div>
             </div>
           </div>
