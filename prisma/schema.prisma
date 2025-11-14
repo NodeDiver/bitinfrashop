@@ -95,6 +95,7 @@ model InfrastructureProvider {
   website           String?
   contactEmail      String?     @map("contact_email")
   lightningAddress  String?     @map("lightning_address")
+  hostUrl           String?     @map("host_url")  // BTCPay server URL or provider dashboard URL
 
   // Pricing & Technical Details (JSON for flexibility)
   pricingTiers      Json?       @map("pricing_tiers")      // Array of pricing objects
@@ -104,6 +105,16 @@ model InfrastructureProvider {
   isPublic          Boolean     @default(true) @map("is_public")
   supportsNwc       Boolean     @default(false) @map("supports_nwc")
   slotsAvailable    Int?        @map("slots_available")    // Optional capacity limit
+
+  // Onboarding Content (for new shop connections)
+  onboardingWelcomeText   String? @map("onboarding_welcome_text") @db.Text
+  onboardingSetupSteps    Json?   @map("onboarding_setup_steps")    // Array of {text, order}
+  onboardingExternalLinks Json?   @map("onboarding_external_links") // Array of {text, url}
+  onboardingContactInfo   Json?   @map("onboarding_contact_info")   // {email, chat, hours}
+
+  // BTCPay Integration (encrypted)
+  btcpayApiKey      String? @map("btcpay_api_key") @db.Text  // Encrypted API key for Greenfield
+  webhookSecret     String? @map("webhook_secret")           // Secret for webhook verification
 
   // Metadata
   ownerId           Int         @map("owner_id")
@@ -153,6 +164,15 @@ model Shop {
   acceptsBitcoin      Boolean   @default(true) @map("accepts_bitcoin")
   isPublic            Boolean   @default(true) @map("is_public")
 
+  // Service Requirements (for provider communication)
+  serviceRequirements String?   @map("service_requirements") @db.Text
+
+  // BTCPay Integration (if connected to BTCPay provider)
+  btcpayStoreId       String?   @map("btcpay_store_id")
+  btcpayUserId        String?   @map("btcpay_user_id")
+  btcpayUsername      String?   @map("btcpay_username")
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+
   // Metadata
   ownerId             Int       @map("owner_id")
   createdAt           DateTime  @default(now()) @map("created_at")
@@ -184,6 +204,8 @@ enum ConnectionType {
 enum ConnectionStatus {
   ACTIVE
   PENDING
+  PENDING_SETUP      // Shop created but BTCPay setup incomplete
+  FAILED
   DISCONNECTED
 }
 
@@ -196,8 +218,13 @@ model Connection {
 
   // NWC Payment Data (only for PAID_SUBSCRIPTION)
   nwcConnectionString String?           @map("nwc_connection_string") @db.Text  // Encrypted
+  nwcPaymentId        String?           @map("nwc_payment_id")                 // NWC recurring payment ID
   subscriptionAmount  Int?              @map("subscription_amount")            // Sats
   subscriptionInterval String?          @map("subscription_interval")          // monthly, yearly, etc.
+
+  // Error Tracking (for failed setups)
+  setupError          String?           @map("setup_error") @db.Text          // Last error message
+  retryCount          Int               @default(0) @map("retry_count")       // Number of retry attempts
 
   // Metadata
   createdAt           DateTime          @default(now()) @map("created_at")

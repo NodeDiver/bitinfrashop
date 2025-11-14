@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { connectionPaymentService } from '@/lib/connection-payment-service';
+import { logger } from '@/lib/logger';
 
 // GET /api/shops - List all public shops (or user's own shops if authenticated)
 export async function GET(request: NextRequest) {
@@ -161,7 +163,11 @@ export async function POST(request: NextRequest) {
       lightningAddress,
       acceptsBitcoin,
       isPublic,
-      providerId // Optional: connect to a provider immediately
+      providerId, // Optional: connect to a provider immediately
+      serviceRequirements, // Optional: service requirements for provider
+      amount, // Optional: subscription amount in sats
+      timeframe, // Optional: subscription interval (monthly, etc.)
+      nwcConnectionString // Optional: NWC connection for paid subscriptions
     } = body;
 
     // Validation
@@ -172,17 +178,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user has SHOP_OWNER role
+    // Verify user exists
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
-      select: { role: true }
+      where: { id: parseInt(userId) }
     });
 
-    if (!user || user.role !== 'SHOP_OWNER') {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Only users with SHOP_OWNER role can create shops' },
-        { status: 403 }
+        { error: 'User not found' },
+        { status: 404 }
       );
+    }
+
+    // If providerId is provided, verify provider exists
+    let provider = null;
+    if (providerId) {
+      provider = await prisma.infrastructureProvider.findUnique({
+        where: { id: parseInt(providerId) }
+      });
+
+      if (!provider) {
+        return NextResponse.json(
+          { error: 'Provider not found' },
+          { status: 404 }
+        );
+      }
     }
 
     // Create shop
@@ -200,6 +220,7 @@ export async function POST(request: NextRequest) {
         lightningAddress,
         acceptsBitcoin: acceptsBitcoin !== undefined ? acceptsBitcoin : true,
         isPublic: isPublic !== undefined ? isPublic : true,
+        serviceRequirements,
         ownerId: parseInt(userId)
       },
       include: {
@@ -214,15 +235,124 @@ export async function POST(request: NextRequest) {
     });
 
     // If providerId is provided, create connection
-    if (providerId) {
-      await prisma.connection.create({
+    if (providerId && provider) {
+      // Determine connection type based on whether amount is provided
+      const connectionType = amount ? 'PAID_SUBSCRIPTION' : 'FREE_LISTING';
+
+      // Validate NWC connection string for paid subscriptions
+      if (amount && !nwcConnectionString) {
+        return NextResponse.json(
+          { error: 'NWC connection string required for paid subscriptions' },
+          { status: 400 }
+        );
+      }
+
+      const connection = await prisma.connection.create({
         data: {
           shopId: shop.id,
           providerId: parseInt(providerId),
-          connectionType: 'FREE_LISTING', // Default to free listing
-          status: 'PENDING'
+          connectionType,
+          status: 'PENDING',
+          subscriptionAmount: amount ? parseInt(amount) : null,
+          subscriptionInterval: timeframe || null
         }
       });
+
+      // Initiate NWC payment for paid subscriptions
+      if (amount && nwcConnectionString) {
+        logger.info(`Initiating NWC payment for connection ${connection.id}`);
+
+        try {
+          const paymentResult = await connectionPaymentService.initiateConnectionPayment(
+            connection.id,
+            nwcConnectionString
+          );
+
+          if (!paymentResult.success) {
+            logger.error(`Payment initiation failed for connection ${connection.id}:`, paymentResult.error);
+            // Connection status is already updated to FAILED by the payment service
+          }
+        } catch (paymentError) {
+          logger.error('Error during payment initiation:', paymentError);
+          // Mark connection as failed
+          await prisma.connection.update({
+            where: { id: connection.id },
+            data: {
+              status: 'FAILED',
+              setupError: `Payment initiation error: ${paymentError instanceof Error ? paymentError.message : 'Unknown error'}`
+            }
+          });
+        }
+      } else if (!amount) {
+        // Free listing - mark as ACTIVE immediately
+        await prisma.connection.update({
+          where: { id: connection.id },
+          data: {
+            status: 'ACTIVE'
+          }
+        });
+      }
+
+      // If it's a BTCPay provider, call Greenfield API to create store
+      if (provider.serviceType === 'BTCPAY_SERVER' && provider.hostUrl) {
+        try {
+          // Call Greenfield API endpoint
+          const greenfieldResponse = await fetch(`${request.nextUrl.origin}/api/providers/greenfield/create-store`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': request.headers.get('cookie') || ''
+            },
+            body: JSON.stringify({
+              shopId: shop.id,
+              providerId: parseInt(providerId),
+              shopName: name,
+              shopEmail: contactEmail || lightningAddress
+            })
+          });
+
+          if (greenfieldResponse.ok) {
+            const greenfieldData = await greenfieldResponse.json();
+
+            // Update shop with BTCPay credentials
+            await prisma.shop.update({
+              where: { id: shop.id },
+              data: {
+                btcpayStoreId: greenfieldData.storeId,
+                btcpayUserId: greenfieldData.userId,
+                btcpayUsername: greenfieldData.username
+              }
+            });
+
+            // Return shop with temp password for onboarding
+            return NextResponse.json({
+              shop: {
+                id: shop.id,
+                name: shop.name,
+                description: shop.description,
+                logo_url: shop.logoUrl,
+                address: shop.address,
+                latitude: shop.latitude,
+                longitude: shop.longitude,
+                is_physical_location: shop.isPhysicalLocation,
+                website: shop.website,
+                contact_email: shop.contactEmail,
+                lightning_address: shop.lightningAddress,
+                accepts_bitcoin: shop.acceptsBitcoin,
+                is_public: shop.isPublic,
+                owner: shop.owner,
+                btcpay_username: greenfieldData.username,
+                btcpay_temp_password: greenfieldData.tempPassword,
+                created_at: shop.createdAt,
+                updated_at: shop.updatedAt
+              }
+            }, { status: 201 });
+          }
+        } catch (greenfieldError) {
+          console.error('Greenfield API error:', greenfieldError);
+          // Continue anyway - shop is created, just mark connection as PENDING
+        }
+      }
     }
 
     return NextResponse.json({
