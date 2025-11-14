@@ -5,6 +5,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/contexts/ToastContext';
 import ToggleSwitch from '@/components/ToggleSwitch';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import ProviderSelectionModal from '@/components/ProviderSelectionModal';
+import { InfrastructureProvider } from '@/types/provider';
 
 type Store = { 
   id: string; 
@@ -24,6 +26,13 @@ interface BTCPayServer {
 }
 
 export default function AddShop() {
+  // Path selection state
+  const [pathChoice, setPathChoice] = useState<'find_now' | 'list_first' | null>(null);
+  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<InfrastructureProvider | null>(null);
+  const [hasNWC, setHasNWC] = useState(false);
+  const [checkingNWC, setCheckingNWC] = useState(false);
+
   // BTCPay Server selection (filtered to public servers with 2+ slots)
   const [availableServers, setAvailableServers] = useState<BTCPayServer[]>([]);
   const [selectedServer, setSelectedServer] = useState<BTCPayServer | null>(null);
@@ -57,11 +66,54 @@ export default function AddShop() {
   const convertTimeframeToInterval = (timeframe: string): string => {
     const mapping: Record<string, string> = {
       '1h': 'hourly',
-      '1d': 'daily', 
+      '1d': 'daily',
       '7d': 'weekly',
       '30d': 'monthly'
     };
     return mapping[timeframe] || 'daily';
+  };
+
+  // Check if user has NWC configured
+  const checkNWCStatus = async () => {
+    setCheckingNWC(true);
+    try {
+      const response = await fetch('/api/nwc/status');
+      if (response.ok) {
+        const data = await response.json();
+        setHasNWC(data.hasNWC || false);
+        return data.hasNWC || false;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking NWC status:', error);
+      return false;
+    } finally {
+      setCheckingNWC(false);
+    }
+  };
+
+  // Handle path selection
+  const handlePathChoice = async (choice: 'find_now' | 'list_first') => {
+    setPathChoice(choice);
+
+    if (choice === 'find_now') {
+      // Check NWC status before allowing to proceed
+      const nwcStatus = await checkNWCStatus();
+      if (!nwcStatus) {
+        // Show NWC required message
+        return;
+      }
+      // Open provider modal
+      setShowProviderModal(true);
+    }
+  };
+
+  // Handle provider selection from modal
+  const handleProviderSelected = (provider: InfrastructureProvider) => {
+    setSelectedProvider(provider);
+    setShowProviderModal(false);
+    // This will trigger the subscribe flow
+    handleSubscribeToProvider(provider);
   };
 
   // Fetch available BTCPay servers (public with 2+ slots)
@@ -143,17 +195,12 @@ export default function AddShop() {
   }, [selectedShop, stores]);
 
 
-  // Handle subscribe button
-  const handleSubscribe = async () => {
+  // Handle subscribe to provider (new flow)
+  const handleSubscribeToProvider = async (provider: InfrastructureProvider) => {
     setLoading(true);
     setErrors({});
 
-    if (!selectedServer) {
-      showToast('Please select a BTCPay server', 'error');
-      setLoading(false);
-      return;
-    }
-
+    // Validation
     if (!shopOwnerLightningAddress) {
       showToast('Please enter your lightning address for refunds', 'error');
       setLoading(false);
@@ -172,28 +219,22 @@ export default function AddShop() {
       return;
     }
 
-    if (selectedShopHasSubscription) {
-      showToast('Cannot create subscription to a shop that already has an active subscription', 'error');
-      setLoading(false);
-      return;
-    }
-
-    const selected = stores.find((s) => s.id === selectedShop);
-    
     try {
-      // First, create the shop in our database
+      // Create the shop with provider connection
       const shopResponse = await fetch('/api/shops', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: selected?.name || 'My Shop',
-          server_id: selectedServer.id,
+          name: shopDescription.substring(0, 50), // Use first part of description as name
+          provider_id: provider.provider_id,
           lightning_address: shopOwnerLightningAddress,
           is_public: isShopPublic,
           description: shopDescription,
           service_requirements: serviceRequirements,
+          amount: amount,
+          timeframe: convertTimeframeToInterval(timeframe),
         }),
       });
 
@@ -206,9 +247,69 @@ export default function AddShop() {
 
       const shopData = await shopResponse.json();
       const shopId = shopData.shop.id;
-      setCreatedShopId(shopId);
-      setShowLightningSub(true);
+
+      // Redirect to onboarding page
+      window.location.href = `/onboarding/${provider.provider_id}/${shopId}`;
+    } catch (error) {
+      console.error('Error creating shop:', error);
+      showToast('Failed to create shop', 'error');
       setLoading(false);
+    }
+  };
+
+  // Handle "List Shop First" path
+  const handleListShopFirst = async () => {
+    setLoading(true);
+    setErrors({});
+
+    // Validation
+    if (!shopOwnerLightningAddress) {
+      showToast('Please enter your lightning address', 'error');
+      setLoading(false);
+      return;
+    }
+
+    if (!shopDescription || shopDescription.trim().length < 30) {
+      showToast('Please provide a shop description (at least 30 characters)', 'error');
+      setLoading(false);
+      return;
+    }
+
+    if (shopDescription.length > 400) {
+      showToast('Shop description must be 400 characters or less', 'error');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Create shop without provider
+      const shopResponse = await fetch('/api/shops', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: shopDescription.substring(0, 50),
+          provider_id: null,
+          lightning_address: shopOwnerLightningAddress,
+          is_public: true, // Always public for "list first" path
+          description: shopDescription,
+          service_requirements: serviceRequirements,
+        }),
+      });
+
+      if (!shopResponse.ok) {
+        const data = await shopResponse.json();
+        showToast(data.error || 'Failed to create shop', 'error');
+        setLoading(false);
+        return;
+      }
+
+      showToast('Shop listed successfully! Browse providers on the Discover page.', 'success');
+      // Redirect to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 2000);
     } catch (error) {
       console.error('Error creating shop:', error);
       showToast('Failed to create shop', 'error');
@@ -236,167 +337,122 @@ export default function AddShop() {
 
           {/* Main Content */}
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Left Column - BTCPay Server Information (Non-customizable) */}
+            {/* Left Column - Provider Selection */}
             <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm p-6 border border-neutral-200 dark:border-neutral-700">
-              <h2 className="text-xl font-semibold mb-6 text-neutral-900 dark:text-white">BTCPay Server Information</h2>
-              
-              {/* BTCPay Server Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  Select BTCPay Server
-                </label>
-                <select
-                  value={selectedServer?.id || ''}
-                  onChange={(e) => {
-                    const server = availableServers.find(s => s.id.toString() === e.target.value);
-                    setSelectedServer(server || null);
-                  }}
-                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
-                >
-                  <option value="">Select a server...</option>
-                  {availableServers.map((server) => (
-                    <option key={server.id} value={server.id}>
-                      {server.name} ({server.available_slots} slots available)
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  Only public servers with 2+ available slots are shown
-                </p>
-              </div>
+              <h2 className="text-xl font-semibold mb-6 text-neutral-900 dark:text-white">Choose Your Path</h2>
 
-              {/* Server Information Display */}
-              {selectedServer && (
-                <div className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
-                  <h3 className="font-medium text-neutral-900 dark:text-white mb-2">{selectedServer.name}</h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">{selectedServer.host_url}</p>
-                  {selectedServer.description && (
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">{selectedServer.description}</p>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-600 dark:text-neutral-400">
-                      Available slots: <span className="font-medium text-orange-600 dark:text-orange-400">{selectedServer.available_slots}</span>
-                    </span>
-                    <span className="text-neutral-600 dark:text-neutral-400">
-                      Connected shops: <span className="font-medium">{selectedServer.current_shops}</span>
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Shop Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  Select Shop
-                </label>
-                {loadingStores ? (
-                  <div className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-neutral-100 dark:bg-neutral-600 text-neutral-500 dark:text-neutral-400">
-                    Loading shops from server...
-                  </div>
-                ) : stores.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-neutral-100 dark:bg-neutral-600 text-neutral-500 dark:text-neutral-400">
-                    No shops found on this server
-                  </div>
-                ) : (
-                  <select
-                    value={selectedShop}
-                    onChange={(e) => setSelectedShop(e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
+              {/* Two-Path Choice UI */}
+              {!pathChoice ? (
+                <div className="space-y-4">
+                  {/* Option A: Find Provider Now */}
+                  <button
+                    onClick={() => handlePathChoice('find_now')}
+                    className="w-full text-left p-6 border-2 border-neutral-300 dark:border-neutral-600 hover:border-orange-500 dark:hover:border-orange-500 rounded-xl transition-all duration-200 group"
+                    disabled={checkingNWC}
                   >
-                    <option value="">Select a shop...</option>
-                    {stores.map((store) => (
-                      <option 
-                        key={store.id} 
-                        value={store.id}
-                        disabled={store.hasActiveSubscription}
-                        className={store.hasActiveSubscription ? 'text-gray-400' : ''}
-                      >
-                        {store.name} {store.hasActiveSubscription ? '(Already subscribed)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                
-                {/* Shop Status Messages */}
-                {!loadingStores && selectedServer && stores.length === 0 && (
-                  <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      There are no shops on this BTCPay server. Please contact the server owner to add shops before creating a subscription.
-                    </p>
-                  </div>
-                )}
-                
-                {!loadingStores && selectedServer && stores.length > 0 && (
-                  <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                    {stores.filter(s => !s.hasActiveSubscription).length} of {stores.length} shops available for subscription
-                  </div>
-                )}
-              </div>
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-neutral-400 dark:border-neutral-500 group-hover:border-orange-500 dark:group-hover:border-orange-400"></div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
+                          <span>⚡</span>
+                          Find Provider Now
+                        </h3>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+                          Browse available infrastructure providers and connect immediately
+                        </p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                          ⚠️ Requires NWC (Nostr Wallet Connect) for payments
+                        </p>
+                      </div>
+                    </div>
+                  </button>
 
-              {/* Shop Subscription Status */}
-              {selectedShopHasSubscription && (
-                <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                  <div className="flex items-center">
-                    <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0" />
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                      This shop already has an active subscription. Please select another shop or contact the server owner.
-                    </p>
+                  {/* Option B: List Shop First */}
+                  <button
+                    onClick={() => handlePathChoice('list_first')}
+                    className="w-full text-left p-6 border-2 border-neutral-300 dark:border-neutral-600 hover:border-orange-500 dark:hover:border-orange-500 rounded-xl transition-all duration-200 group"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-neutral-400 dark:border-neutral-500 group-hover:border-orange-500 dark:group-hover:border-orange-400"></div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
+                          <span>📋</span>
+                          List Shop First
+                        </h3>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+                          Create your shop listing and reach out to providers later
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          ✓ No setup required
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              ) : pathChoice === 'find_now' && !hasNWC ? (
+                /* NWC Required Message */
+                <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl">
+                  <h3 className="text-lg font-bold text-yellow-900 dark:text-yellow-200 mb-3 flex items-center gap-2">
+                    <ExclamationTriangleIcon className="w-6 h-6" />
+                    NWC Setup Required
+                  </h3>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-4">
+                    You need to set up Nostr Wallet Connect (NWC) before subscribing to a provider.
+                  </p>
+                  <div className="flex gap-3">
+                    <Link
+                      href="/nwc-management"
+                      className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium text-center transition-colors"
+                    >
+                      Go to NWC Setup
+                    </Link>
+                    <button
+                      onClick={() => setPathChoice(null)}
+                      className="flex-1 px-4 py-2 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-900 dark:text-white rounded-lg font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              )}
+              ) : pathChoice === 'list_first' ? (
+                /* List Shop First UI */
+                <div className="space-y-4">
+                  <div className="p-6 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-3">
+                      List Your Shop
+                    </h3>
+                    <div className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+                      <p className="flex items-start gap-2">
+                        <span className="text-green-600 dark:text-green-400">✓</span>
+                        <span>Your shop will be listed publicly in the marketplace</span>
+                      </p>
+                      <p className="flex items-start gap-2">
+                        <span className="text-green-600 dark:text-green-400">✓</span>
+                        <span>You can browse providers and contact them when ready</span>
+                      </p>
+                    </div>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+                      ➜ Fill out shop details on the right, then create your listing
+                    </p>
+                  </div>
 
-              {/* Server Owner's Lightning Address (Read-only) */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  Server Owner's Lightning Address
-                </label>
-                <input
-                  type="text"
-                  value={selectedServer?.lightning_address || ''}
-                  readOnly
-                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md bg-neutral-100 dark:bg-neutral-600 text-neutral-500 dark:text-neutral-400 cursor-not-allowed"
-                  placeholder="Server owner's lightning address"
-                />
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  This is where subscription payments will be sent
-                </p>
-              </div>
+                  {/* Create Shop Listing Button */}
+                  <button
+                    onClick={handleListShopFirst}
+                    disabled={loading || !shopOwnerLightningAddress || !shopDescription || shopDescription.trim().length < 30}
+                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Creating Shop Listing...' : 'Create Shop Listing'}
+                  </button>
 
-              {/* Service Requirements */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  Service Requirements <span className="text-neutral-500 dark:text-neutral-400 font-normal">(Optional)</span>
-                </label>
-                <textarea
-                  value={serviceRequirements}
-                  onChange={(e) => setServiceRequirements(e.target.value)}
-                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-neutral-900 dark:text-white bg-white dark:bg-neutral-700 transition-colors duration-200"
-                  rows={4}
-                  maxLength={500}
-                  placeholder="e.g., 99% uptime 9am-5pm EST, 24hr email support, help with payment setup."
-                />
-                <div className="mt-1 flex justify-between items-start">
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 flex-1">
-                    Tell your provider what you need (uptime, support, setup help).
-                  </p>
-                  <p className="text-xs text-neutral-400 dark:text-neutral-500 ml-2 flex-shrink-0">
-                    {serviceRequirements.length}/500
-                  </p>
+                  <button
+                    onClick={() => setPathChoice(null)}
+                    className="w-full px-4 py-2 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-900 dark:text-white rounded-lg font-medium transition-colors"
+                  >
+                    ← Change Choice
+                  </button>
                 </div>
-              </div>
-
-              {/* Subscribe Button */}
-              <button
-                onClick={handleSubscribe}
-                disabled={loading || !selectedShop || !selectedServer || !shopOwnerLightningAddress || !shopDescription || shopDescription.trim().length < 30 || shopDescription.length > 400 || selectedShopHasSubscription || stores.length === 0 || stores.filter(s => !s.hasActiveSubscription).length === 0}
-                className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed magnetic-pull"
-              >
-                {loading ? 'Creating Shop...' : 
-                 stores.length === 0 ? 'No Shops Available' :
-                 stores.filter(s => !s.hasActiveSubscription).length === 0 ? 'No Available Shops' :
-                 selectedShopHasSubscription ? 'Shop Already Subscribed' :
-                 'Create Shop & Subscribe'}
-              </button>
+              ) : null}
             </div>
 
             {/* Right Column - Shop Owner & Subscription Details */}
@@ -545,6 +601,13 @@ export default function AddShop() {
               </div>
             </div>
           )}
+
+          {/* Provider Selection Modal */}
+          <ProviderSelectionModal
+            isOpen={showProviderModal}
+            onClose={() => setShowProviderModal(false)}
+            onSelectProvider={handleProviderSelected}
+          />
         </div>
       </div>
     </ProtectedRoute>
