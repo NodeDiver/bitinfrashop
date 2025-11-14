@@ -1,26 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { createBTCPayClient } from '@/lib/btcpay-client';
+import { createBTCPayDryRunClient } from '@/lib/btcpay-dry-run';
 import { encryptionService } from '@/lib/encryption';
 import { logger } from '@/lib/logger';
+import { auditLogger } from '@/lib/audit-logger';
+import { featureFlags } from '@/lib/feature-flags';
+import { applyRateLimit, RATE_LIMITS } from '@/lib/rate-limiter';
 
 /**
  * POST /api/providers/greenfield/create-store
  * Create a store on BTCPay Server via Greenfield API
  */
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
+    logger.info('Greenfield API: Create store request received');
+
     const userId = request.cookies.get('user_id')?.value;
 
     if (!userId) {
+      logger.warn('Greenfield API: Unauthorized access attempt');
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
+    // Apply rate limiting
+    const rateLimitResult = await applyRateLimit(`greenfield:${userId}`, RATE_LIMITS.greenfield);
+    if (!rateLimitResult.allowed) {
+      logger.warn('Greenfield API: Rate limit exceeded', { userId });
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: rateLimitResult.headers
+        }
+      );
+    }
+
     const body = await request.json();
     const { shopId, providerId, shopName, shopEmail } = body;
+
+    logger.info('Greenfield API: Request details', {
+      userId,
+      shopId,
+      providerId,
+      shopName
+    });
 
     // Validation
     if (!shopId || !providerId || !shopName) {
@@ -87,8 +115,21 @@ export async function POST(request: NextRequest) {
     const username = shopName.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + shopId;
     const tempPassword = generateSecurePassword();
 
-    // Create BTCPay client
-    const btcpayClient = createBTCPayClient(provider.hostUrl, apiKey);
+    // Check if BTCPay integration is enabled
+    if (featureFlags.isDisabled('btcpay_integration')) {
+      logger.warn('BTCPay integration is disabled via feature flag');
+      return NextResponse.json(
+        { error: 'BTCPay integration is currently disabled' },
+        { status: 503 }
+      );
+    }
+
+    // Create BTCPay client with dry-run support
+    const btcpayClient = createBTCPayDryRunClient(provider.hostUrl, apiKey);
+
+    if (btcpayClient.isDryRun()) {
+      logger.warn('BTCPay client running in DRY-RUN mode - no actual API calls will be made');
+    }
 
     // Attempt to create shop setup (with retry logic)
     let setupResult;
@@ -108,7 +149,19 @@ export async function POST(request: NextRequest) {
         );
 
         // Success! Break out of retry loop
-        logger.info(`Successfully created BTCPay shop setup for ${shopName}`);
+        logger.info(`Successfully created BTCPay shop setup for ${shopName}`, {
+          storeId: setupResult.store.id,
+          userId: setupResult.user.id,
+          duration: Date.now() - startTime
+        });
+
+        // Audit log
+        await auditLogger.logBTCPay('btcpay.store_created', parseInt(providerId), {
+          shopId,
+          shopName,
+          storeId: setupResult.store.id
+        });
+
         break;
 
       } catch (error) {

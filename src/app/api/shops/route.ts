@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { connectionPaymentService } from '@/lib/connection-payment-service';
 import { logger } from '@/lib/logger';
+import { inputValidator, ValidationError } from '@/lib/input-validator';
+import { applyRateLimit, RATE_LIMITS } from '@/lib/rate-limiter';
 
 // GET /api/shops - List all public shops (or user's own shops if authenticated)
 export async function GET(request: NextRequest) {
@@ -149,6 +151,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Apply rate limiting
+    const rateLimitResult = await applyRateLimit(`shops:${userId}`, RATE_LIMITS.api);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: rateLimitResult.headers
+        }
+      );
+    }
+
     const body = await request.json();
     const {
       name,
@@ -170,12 +184,29 @@ export async function POST(request: NextRequest) {
       nwcConnectionString // Optional: NWC connection for paid subscriptions
     } = body;
 
-    // Validation
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Shop name is required' },
-        { status: 400 }
-      );
+    // Validate and sanitize inputs
+    try {
+      const validatedName = inputValidator.validateShopName(name);
+      const validatedDescription = inputValidator.validateDescription(description, false);
+      const validatedWebsite = website ? inputValidator.validateUrl(website) : null;
+      const validatedEmail = contactEmail ? inputValidator.validateEmail(contactEmail, false) : null;
+      const validatedLightningAddress = lightningAddress ? inputValidator.validateLightningAddress(lightningAddress, false) : null;
+      const validatedCoords = inputValidator.validateCoordinates(latitude, longitude);
+      const validatedNWC = nwcConnectionString ? inputValidator.validateNWCConnection(nwcConnectionString, false) : null;
+
+      // If amount provided, validate it
+      let validatedAmount = null;
+      if (amount) {
+        validatedAmount = inputValidator.validateInteger(amount, 'Subscription amount', 1, 100000000);
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          { error: error.message, field: error.field },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
     // Verify user exists

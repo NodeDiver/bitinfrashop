@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { encryptionService } from '@/lib/encryption';
 import { logger } from '@/lib/logger';
+import { auditLogger } from '@/lib/audit-logger';
+import { featureFlags } from '@/lib/feature-flags';
+import { applyRateLimit, RATE_LIMITS } from '@/lib/rate-limiter';
 
 /**
  * POST /api/webhooks/btcpay
@@ -14,6 +17,29 @@ import { logger } from '@/lib/logger';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check if webhooks are enabled
+    if (featureFlags.isDisabled('provider_webhooks')) {
+      logger.warn('BTCPay webhooks are disabled via feature flag');
+      return NextResponse.json(
+        { error: 'Webhooks are currently disabled' },
+        { status: 503 }
+      );
+    }
+
+    // Apply rate limiting by IP address
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const rateLimitResult = await applyRateLimit(`webhook:${ipAddress}`, RATE_LIMITS.webhook);
+    if (!rateLimitResult.allowed) {
+      logger.warn('BTCPay webhook: Rate limit exceeded', { ipAddress });
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        {
+          status: 429,
+          headers: rateLimitResult.headers
+        }
+      );
+    }
+
     const body = await request.text();
     const signature = request.headers.get('btcpay-sig');
 
@@ -48,7 +74,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.info(`Received BTCPay webhook: ${type} for store ${storeId}`);
+    logger.info(`Received BTCPay webhook: ${type} for store ${storeId}`, {
+      storeId,
+      type,
+      timestamp,
+      ipAddress
+    });
 
     // Find the shop and provider by BTCPay store ID
     const shop = await prisma.shop.findFirst({
